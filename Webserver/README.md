@@ -1,0 +1,1 @@
+Se implementaron 2 librerias para manipular Wifi AP y STA, y otra para manipular el servidor web.

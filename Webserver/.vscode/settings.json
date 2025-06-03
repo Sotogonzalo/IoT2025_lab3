@@ -1,0 +1,18 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.espIdfPathWin": "C:\\Users\\sotog\\esp\\v5.4.1\\esp-idf",
+  "idf.pythonInstallPath": "C:\\Users\\sotog\\.espressif\\tools\\idf-python\\3.11.2\\python.exe",
+  "idf.openOcdConfigs": [
+    "board/esp32s2-kaluga-1.cfg"
+  ],
+  "idf.portWin": "COM6",
+  "idf.toolsPathWin": "C:\\Users\\sotog\\.espressif",
+  "idf.customExtraVars": {
+    "IDF_TARGET": "esp32s2"
+  },
+  "idf.flashType": "UART",
+  "files.associations": {
+    "esp_http_server.h": "c",
+    "esp_log.h": "c"
+  }
+}
