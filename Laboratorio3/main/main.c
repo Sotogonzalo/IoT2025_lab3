@@ -3,10 +3,10 @@
 // nueva Task A. Esta tarea se encarga de llamar a la task C y 
 // agregarle un delay a la tarea antes de mandarla a la queue.
 void vTaskA( void *pvParameters ) {
-    while(1) {esp_rom_delay_ms(int delay);
+    while(1) {
             for(;;);
         }
-    vTaskDelete(NULL); 
+    vTaskDelete(NULL);
 }
 
 
@@ -31,9 +31,6 @@ void vTaskB( void *pvParameters ) {
     vTaskDelete(NULL);
 }
 
-
-//La task B debe tener mayor prioridad que la task A y la task C.
-// hay que crear una libreria por tarea  
 void app_main(void)
 {
     
