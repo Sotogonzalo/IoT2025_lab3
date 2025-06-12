@@ -2,9 +2,9 @@
 #include "freertos/task.h"
 #include "led_embebido.h"
 #include "esp_log.h"
+#include "color_shared.h"
 
-#define TASK_A_DELAY_MS 500
-
+#define TASK_A_DELAY_MS 2000
 static const char *TAG = "TASK_A";
 
 static SemaphoreHandle_t mutex = NULL;
