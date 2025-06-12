@@ -1,26 +1,31 @@
 #include "taskC.h"
+#include "color_shared.h"
 #include "led_embebido.h"
 #include "esp_log.h"
+#include "freertos/semphr.h"
+#include "freertos/queue.h"
+#include "freertos/timers.h"
 #include <stdlib.h>
 #include <inttypes.h>
 
-static const char *TAG = "TaskC";
+static const char *TAG = "TASK_C";
 
 static QueueHandle_t xQueueComandos = NULL;
 static SemaphoreHandle_t xSemaforoColor = NULL;
-static uint8_t *ptr_r, *ptr_g, *ptr_b;
+static led_color_t *color_ptr = NULL;
 
-// actualiza el color protegido por semáforo
+// Callback del timer, actualiza el color compartido
 static void timer_callback(TimerHandle_t xTimer) {
-    comando_color_t *comando = (comando_color_t *) pvTimerGetTimerID(xTimer);
+    led_color_t *comando = (led_color_t *) pvTimerGetTimerID(xTimer);
 
     if (xSemaphoreTake(xSemaforoColor, portMAX_DELAY)) {
-        *ptr_r = comando->r;
-        *ptr_g = comando->g;
-        *ptr_b = comando->b;
+        color_ptr->r = comando->r;
+        color_ptr->g = comando->g;
+        color_ptr->b = comando->b;
         xSemaphoreGive(xSemaforoColor);
 
-        ESP_LOGI(TAG, "Color actualizado por timer: R=%d G=%d B=%d", comando->r, comando->g, comando->b);
+        ESP_LOGI(TAG, "Color actualizado por timer: R=%d G=%d B=%d",
+                 comando->r, comando->g, comando->b);
     }
 
     free(comando);
@@ -28,17 +33,22 @@ static void timer_callback(TimerHandle_t xTimer) {
 }
 
 static void vTaskC(void *pvParameters) {
+    ESP_LOGI(TAG, "Tarea C iniciada");
+
     while (1) {
-        comando_color_t *comando = malloc(sizeof(comando_color_t));
+        led_color_t *comando = malloc(sizeof(led_color_t));
         if (!comando) {
             ESP_LOGE(TAG, "Fallo malloc comando");
             continue;
         }
 
         if (xQueueReceive(xQueueComandos, comando, portMAX_DELAY) == pdTRUE) {
+            ESP_LOGI(TAG, "Comando recibido: R=%d G=%d B=%d delay=%" PRIu32,
+                     comando->r, comando->g, comando->b, comando->delay_segundos);
+
             TimerHandle_t xTimer = xTimerCreate("CmdTimer",
                                                 pdMS_TO_TICKS(comando->delay_segundos * 1000),
-                                                pdFALSE, // one-shot
+                                                pdFALSE,
                                                 comando,
                                                 timer_callback);
 
@@ -48,7 +58,7 @@ static void vTaskC(void *pvParameters) {
                     free(comando);
                     xTimerDelete(xTimer, 0);
                 } else {
-                    ESP_LOGI(TAG, "Timer iniciado por %" PRIu32 " s", comando->delay_segundos);
+                    ESP_LOGI(TAG, "Timer iniciado (%" PRIu32 " s)", comando->delay_segundos);
                 }
             } else {
                 ESP_LOGE(TAG, "Fallo al crear el timer");
@@ -62,12 +72,10 @@ static void vTaskC(void *pvParameters) {
     vTaskDelete(NULL);
 }
 
-void start_task_c(QueueHandle_t queue, SemaphoreHandle_t semaforo, uint8_t *color_r, uint8_t *color_g, uint8_t *color_b) {
+void start_task_c(QueueHandle_t queue, SemaphoreHandle_t semaforo, led_color_t *shared_color) {
     xQueueComandos = queue;
     xSemaforoColor = semaforo;
-    ptr_r = color_r;
-    ptr_g = color_g;
-    ptr_b = color_b;
+    color_ptr = shared_color;
 
     xTaskCreate(vTaskC, "task_c", 4096, NULL, 5, NULL);
 }
