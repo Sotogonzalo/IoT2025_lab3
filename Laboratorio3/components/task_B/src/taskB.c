@@ -10,61 +10,95 @@
 #define TAG "TASK_B"
 #define MAX_LINE_LENGTH 128
 
-#define ECHO_UART_PORT_NUM (0)
-#define ECHO_UART_BAUD_RATE (115200)
+#define ECHO_UART_PORT_NUM (0)       // puerto UART a usarse UART0
+#define ECHO_UART_BAUD_RATE (115200) // velocidad de transmision de datos por el canal (Bits/Segundos)
 
 static QueueHandle_t taskB_queue = NULL;
 
-static void parse_command(const char *input, led_color_t *cmd) {
+static void parse_command(const char *input, led_color_t *cmd) // lee el imput del usuario y los relaciona a la estructura del color del led y el delay
+{
     char color[16];
     int delay;
 
-    if (sscanf(input, "%15s %d", color, &delay) == 2) {
+    if (sscanf(input, "%15s %d", color, &delay) == 2)
+    {
         cmd->delay_segundos = delay;
 
-        if (strcasecmp(color, "rojo") == 0) {
-            cmd->r = 255; cmd->g = 0; cmd->b = 0;
-        } else if (strcasecmp(color, "verde") == 0) {
-            cmd->r = 0; cmd->g = 255; cmd->b = 0;
-        } else if (strcasecmp(color, "azul") == 0) {
-            cmd->r = 0; cmd->g = 0; cmd->b = 255;
-        } else {
+        if (strcasecmp(color, "rojo") == 0)
+        {
+            cmd->r = 255;
+            cmd->g = 0;
+            cmd->b = 0;
+        }
+        else if (strcasecmp(color, "verde") == 0)
+        {
+            cmd->r = 0;
+            cmd->g = 255;
+            cmd->b = 0;
+        }
+        else if (strcasecmp(color, "azul") == 0)
+        {
+            cmd->r = 0;
+            cmd->g = 0;
+            cmd->b = 255;
+        }
+        else if (strcasecmp(color, "blanco") == 0)
+        {
+            cmd->r = 255;
+            cmd->g = 255;
+            cmd->b = 255;
+        }
+        else
+        {
             cmd->r = cmd->g = cmd->b = 0;
         }
-    } else {
+    }
+    else
+    {
         cmd->r = cmd->g = cmd->b = 0;
         cmd->delay_segundos = 0;
     }
 }
 
-static void vTaskB(void *pvParameters) {
+static void vTaskB(void *pvParameters)
+{
     uint8_t *rx_buffer = malloc(BUF_SIZE);
     char line_buffer[MAX_LINE_LENGTH];
     int line_index = 0;
 
-    while (1) {
+    while (1)
+    {
         int len = uart_read_bytes(ECHO_UART_PORT_NUM, rx_buffer, BUF_SIZE - 1, pdMS_TO_TICKS(100));
-        if (len > 0) {
-            for (int i = 0; i < len; i++) {
+        if (len > 0)
+        {
+            for (int i = 0; i < len; i++)
+            {
                 char c = (char)rx_buffer[i];
 
-                if (c == '\n' || c == '\r') {
-                    if (line_index > 0) {
+                if (c == '\n' || c == '\r')
+                {
+                    if (line_index > 0)
+                    {
                         line_buffer[line_index] = '\0';
                         ESP_LOGI(TAG, "Recibido: %s", line_buffer);
 
                         led_color_t cmd;
                         parse_command(line_buffer, &cmd);
 
-                        if (xQueueSend(taskB_queue, &cmd, portMAX_DELAY) != pdPASS) {
+                        if (xQueueSend(taskB_queue, &cmd, portMAX_DELAY) != pdPASS)
+                        {
                             ESP_LOGE(TAG, "No se pudo enviar el comando a la cola");
                         }
 
                         line_index = 0;
                     }
-                } else if (line_index < MAX_LINE_LENGTH - 1) {
+                }
+                else if (line_index < MAX_LINE_LENGTH - 1)
+                {
                     line_buffer[line_index++] = c;
-                } else {
+                }
+                else
+                {
                     line_index = 0;
                 }
             }
@@ -75,7 +109,8 @@ static void vTaskB(void *pvParameters) {
     vTaskDelete(NULL);
 }
 
-void taskB_uart_init(void) {
+void taskB_uart_init(void)
+{
     uart_config_t uart_config = {
         .baud_rate = ECHO_UART_BAUD_RATE,
         .data_bits = UART_DATA_8_BITS,
@@ -89,7 +124,8 @@ void taskB_uart_init(void) {
     uart_param_config(ECHO_UART_PORT_NUM, &uart_config);
 }
 
-void start_task_b(QueueHandle_t queue) {
+void start_task_b(QueueHandle_t queue)
+{
     taskB_queue = queue;
     xTaskCreate(vTaskB, "TaskB", 4096, NULL, 10, NULL);
 }
