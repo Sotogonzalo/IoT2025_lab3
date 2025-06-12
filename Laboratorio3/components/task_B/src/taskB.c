@@ -62,13 +62,13 @@ static void parse_command(const char *input, led_color_t *cmd) // lee el imput d
 
 static void vTaskB(void *pvParameters)
 {
-    uint8_t *rx_buffer = malloc(BUF_SIZE);
+    uint8_t *rx_buffer = malloc(BUF_SIZE); // memoria dinamica reservada para lectura del uart
     char line_buffer[MAX_LINE_LENGTH];
     int line_index = 0;
 
     while (1)
     {
-        int len = uart_read_bytes(ECHO_UART_PORT_NUM, rx_buffer, BUF_SIZE - 1, pdMS_TO_TICKS(100));
+        int len = uart_read_bytes(ECHO_UART_PORT_NUM, rx_buffer, BUF_SIZE - 1, pdMS_TO_TICKS(100)); // espera 100ms a un input, si lo recibe lo manda a la queue
         if (len > 0)
         {
             for (int i = 0; i < len; i++)
@@ -105,7 +105,7 @@ static void vTaskB(void *pvParameters)
         }
     }
 
-    free(rx_buffer);
+    free(rx_buffer); // libera memoria, buena practica
     vTaskDelete(NULL);
 }
 
