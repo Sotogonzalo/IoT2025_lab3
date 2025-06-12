@@ -4,14 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
-
-// Estructura para los comandos leídos desde UART
-typedef struct {
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-    uint32_t delay_seconds;
-} led_command_t;
+#include "color_shared.h"
 
 // Inicialización del UART
 void taskB_uart_init(void);
