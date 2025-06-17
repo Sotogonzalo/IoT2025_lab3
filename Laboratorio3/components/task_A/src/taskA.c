@@ -19,12 +19,12 @@ static void vTaskA(void *pvParameters)
         if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE)
         {
             led_embebido_set_color(color_ptr->r, color_ptr->g, color_ptr->b);
-            vTaskDelay(100);
+            vTaskDelay(pdMS_TO_TICKS(TASK_A_DELAY_MS)); // tiempo del LED prendido
             xSemaphoreGive(mutex);
         }
 
         led_embebido_toggle();
-        vTaskDelay(pdMS_TO_TICKS(TASK_A_DELAY_MS));
+        vTaskDelay(pdMS_TO_TICKS(TASK_A_DELAY_MS)); // tiempo que tarda en prender el LED
     }
 
     vTaskDelete(NULL);
